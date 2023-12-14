@@ -1,19 +1,36 @@
-import React from "react";
+import React, { ForwardedRef } from "react";
 import { Component } from "react";
 import { useRef } from "react";
 import { useEffect } from "react";
 import { useState } from "react";
 import { useCallback } from "react";
+import { forwardRef } from "react";
+import { useImperativeHandle } from "react";
+
+let doit = false;
 
 interface Props {
   width: string;
   height: string;
-  paused: string;
-  rand: number;
+  onScoreChanged: (new_score: number) => void;
+  resets: number;
 }
 
-const Canvas = (props: Props) => {
+var intervalVariable = 0;
+var paused = false;
+
+const Canvas = forwardRef((props: Props, ref: ForwardedRef<unknown>) => {
+  useImperativeHandle(ref, () => {
+    return {
+      resetGame: resetGame,
+    };
+  });
+
   const canvasRef = useRef(null);
+
+  let [score, setScore] = useState(0);
+
+  let [resets, setResets] = useState(0);
 
   let [x, setX] = useState(200); // starting horizontal position of ball
   let [y, setY] = useState(150); // starting vertical position of ball
@@ -23,8 +40,6 @@ const Canvas = (props: Props) => {
 
   let [paddleh, setPaddleh] = useState(10); // paddle height
   let [paddlew, setPaddlew] = useState(75); // paddle width
-
-  const [intervalVariable, setIntervalVariable] = useState(0); // track refresh rate for calling draw()
 
   let [nrows, setNrows] = useState(6); // number of rows of bricks
   let [ncols, setNcols] = useState(6); // number of columns of bricks
@@ -47,8 +62,6 @@ const Canvas = (props: Props) => {
   let [ballcolor, setBallColor] = useState("black");
   let [backcolor, setBackColor] = useState("grey");
 
-  let [score, setScore] = useState(0); // store the number of bricks eliminated
-
   let [width, setWidth] = useState(0);
   let [height, setHeight] = useState(0);
   let [paddlex, setPaddleX] = useState(width / 2);
@@ -58,7 +71,7 @@ const Canvas = (props: Props) => {
   let [canvasMinX, setCanvasMinX] = useState(0); // minimum canvas x bounds
   let [canvasMaxX, setCanvasMaxX] = useState(0); // maximum cavnas x bounds
 
-  let [runAnimation, setRunAnimation] = useState(true);
+  let [initialized, setInitialized] = useState(false);
 
   const circle = useCallback((x, y, r) => {
     const canvas = canvasRef.current;
@@ -71,22 +84,22 @@ const Canvas = (props: Props) => {
   }, []);
 
   // used to draw each brick & the paddle
-  const rect = (x, y, w, h) => {
+  const rect = useCallback((x, y, w, h) => {
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
     context.beginPath();
     context.rect(x, y, w, h);
     context.closePath();
     context.fill();
-  };
+  }, []);
 
   // clear the screen in between drawing each animation
-  const clear = () => {
+  const clear = useCallback(() => {
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
-    context.clearRect(0, 0, props.width, props.height);
-    rect(0, 0, props.width, props.height);
-  };
+    context.clearRect(0, 0, width, height);
+    rect(0, 0, width, height);
+  }, []);
 
   const getOffsetLeft = useCallback((elem: HTMLElement) => {
     var offsetLeft = 0;
@@ -138,13 +151,11 @@ const Canvas = (props: Props) => {
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
 
-    if (!canvas) {
-      return;
+    if (doit) {
+      x = 250;
+      y = 150;
     }
-
-    console.log("game paused:", props.paused);
-
-    if (props.paused == "true") {
+    if (!canvas) {
       return;
     }
 
@@ -155,6 +166,7 @@ const Canvas = (props: Props) => {
     clear();
 
     // draw the ball
+    console.log("drawing ball", x, y, ballradius);
     context.fillStyle = ballcolor;
     circle(x, y, ballradius);
 
@@ -207,25 +219,36 @@ const Canvas = (props: Props) => {
   }, []);
 
   const update_score_text = useCallback(() => {
-    // You can send data to your HTML
-    // just like setting styles in CSS
-    // Put <div id="score"></div> in
-    // your HTML for this text to display
-    //  $("#score").text("Score: " + score);
+    props.onScoreChanged(score);
   }, []);
 
   const start_animation = () => {
-    let intervalId = setInterval(draw, 2000);
-    console.log("starting animation id:", intervalId);
-    setIntervalVariable(intervalId);
+    intervalVariable = setInterval(draw, 13);
   };
 
   const stop_animation = () => {
-    console.log("stopping animation id:", intervalVariable);
     clearInterval(intervalVariable);
   };
 
+  const onKeyPress = useCallback((evt: Event) => {
+    if (paused == true) {
+      start_animation();
+      paused = false;
+    } else {
+      stop_animation();
+      paused = true;
+    }
+  }, []);
+
   const init = useCallback(() => {
+    reset();
+
+    // setup pause handling
+    document.addEventListener("keypress", onKeyPress, true);
+    document.addEventListener("mousemove", onMouseMove);
+  });
+
+  const reset = useCallback(() => {
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
 
@@ -242,40 +265,34 @@ const Canvas = (props: Props) => {
     setCanvasMinX(canvasMinX);
     setCanvasMaxX(canvasMaxX);
 
-    score = 0;
-
-    // used to draw the ball
-
-    //Our first draw
-    context.fillStyle = "#00FFFF";
-    context.fillRect(0, 0, context.canvas.width, context.canvas.height);
-    circle(100, 100, 10);
-
     // run draw function every 6 milliseconds to give
     // the illusion of movement
-
     init_bricks();
     start_animation();
-  });
+
+    score = 0;
+    props.onScoreChanged(0);
+  }, []);
 
   useEffect(() => {
     init();
-  }, []);
+  }, [initialized]);
 
-  if (props.paused == "true") {
-    console.log("set true");
-    //  setRunAnimation(false);
-  } else {
-    console.log("set false");
-    // setRunAnimation(true);
-  }
-
-  console.log("canvas paused:" + props.paused);
-  //console.log("canvas rand:" + props.rand);
-
-  // setRunAnimation(props.paused == "true" ? true : false);
+  const resetGame = useCallback(() => {
+    x = 250;
+    setX(250);
+    y = 150;
+    setY(150);
+    dx = 1;
+    dy = -3;
+    doit = true;
+    console.log("calling reset");
+    console.log("x", x, y);
+    reset();
+    doit = false;
+  });
 
   return <canvas ref={canvasRef} width={props.width} height={props.height} />;
-};
+});
 
 export default Canvas;

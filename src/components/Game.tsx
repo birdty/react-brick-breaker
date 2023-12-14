@@ -1,79 +1,41 @@
 import React from "react";
 import { useState } from "react";
-import $ from "jquery";
+import $, { event } from "jquery";
 import Canvas from "./Canvas";
 import { useCallback } from "react";
 import { useEffect } from "react";
-let paused = "false";
-
-const onKeyPress = (evt: Event) => {
-  evt.preventDefault();
-  if (paused == "false") {
-    paused = "true";
-  } else {
-    paused = "false";
-  }
-
-  console.log("game paused:", paused);
-  // console.log("game rand:", rand);
-
-  // rand = rand + 1;
-  //  setRand(rand);
-};
-
-document.addEventListener("keypress", onKeyPress, true);
+import { useRef } from "react";
 
 export default function Game() {
-  //  let [paused, setPaused] = useState("false");
-  let [keyPressBound, setKeyPressBound] = useState(false);
-  let [rand, setRand] = useState(0);
+  const childRef = useRef();
 
-  // keeps track of whether the game is paused (true) or not (false)
-  const reload = () => {};
+  let [score, setScore] = useState(0);
+  let [resets, setResets] = useState(0);
 
-  /*
-
-  const reload = useCallback(() => {
-    x = 200; // starting horizontal position of ball
-    y = 150; // starting vertical position of ball
-    dx = 1; // amount ball should move horizontally
-    dy = -3; // amount ball should move vertically
-    init();
-  });
-*/
-
-  /*
-  const onKeyPress = useCallback((evt: Event) => {
-    evt.preventDefault();
-    if (paused == "false") {
-      paused = "true";
-    } else {
-      paused = "false";
-    }
-
-    console.log("game paused:", paused);
-
-    console.log("game rand:", rand);
-    rand = rand + 1;
-    setRand(rand);
+  const reset = useCallback((event: Event) => {
+    event.preventDefault();
+    //resets = resets + 1;
+    //setResets(resets);
+    childRef.current.resetGame();
   }, []);
-*/
 
-  /*
-  if (keyPressBound == false) {
-    console.log("binding keypress for on keypress");
-    document.addEventListener("keypress", onKeyPress, true);
-    setKeyPressBound(true);
-  }
-*/
+  const onScoreChanged = useCallback((new_score) => {
+    setScore(new_score);
+  }, []);
 
   return (
     <center>
-      <Canvas width="300" height="300" paused={paused}></Canvas>
+      <Canvas
+        width="500"
+        height="300"
+        onScoreChanged={onScoreChanged}
+        resets={resets}
+        ref={childRef}
+      ></Canvas>
       <p>Mouse moves platform &bull; Press any key to pause</p>
-      <button onClick={reload}>Play again</button>
+      <button onClick={reset}>Play again</button>
       <div>
-        <div id="score"></div>
+        <div id="score">Score: {score}</div>
       </div>
     </center>
   );
