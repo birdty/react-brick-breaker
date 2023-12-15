@@ -10,7 +10,6 @@ export default function Game() {
   const childRef = useRef();
 
   let [score, setScore] = useState(0);
-  let [resets, setResets] = useState(0);
 
   const reset = useCallback((event: Event) => {
     event.preventDefault();
@@ -29,7 +28,6 @@ export default function Game() {
         width="500"
         height="300"
         onScoreChanged={onScoreChanged}
-        resets={resets}
         ref={childRef}
       ></Canvas>
       <p>Mouse moves platform &bull; Press any key to pause</p>

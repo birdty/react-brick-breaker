@@ -13,7 +13,6 @@ interface Props {
   width: string;
   height: string;
   onScoreChanged: (new_score: number) => void;
-  resets: number;
 }
 
 var intervalVariable = 0;
@@ -29,8 +28,6 @@ const Canvas = forwardRef((props: Props, ref: ForwardedRef<unknown>) => {
   const canvasRef = useRef(null);
 
   let [score, setScore] = useState(0);
-
-  let [resets, setResets] = useState(0);
 
   let [x, setX] = useState(200); // starting horizontal position of ball
   let [y, setY] = useState(150); // starting vertical position of ball
