@@ -154,6 +154,7 @@ const Canvas = forwardRef((props: Props, ref: ForwardedRef<unknown>) => {
     if (doit) {
       x = 250;
       y = 150;
+      doit = false;
     }
     if (!canvas) {
       return;
@@ -166,7 +167,6 @@ const Canvas = forwardRef((props: Props, ref: ForwardedRef<unknown>) => {
     clear();
 
     // draw the ball
-    console.log("drawing ball", x, y, ballradius);
     context.fillStyle = ballcolor;
     circle(x, y, ballradius);
 
@@ -279,17 +279,16 @@ const Canvas = forwardRef((props: Props, ref: ForwardedRef<unknown>) => {
   }, [initialized]);
 
   const resetGame = useCallback(() => {
+    /*
     x = 250;
     setX(250);
     y = 150;
     setY(150);
     dx = 1;
     dy = -3;
+*/
     doit = true;
-    console.log("calling reset");
-    console.log("x", x, y);
     reset();
-    doit = false;
   });
 
   return <canvas ref={canvasRef} width={props.width} height={props.height} />;
