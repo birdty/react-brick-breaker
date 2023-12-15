@@ -1,10 +1,10 @@
 import React from "react";
+
 import { useState } from "react";
-import $, { event } from "jquery";
-import Canvas from "./Canvas";
 import { useCallback } from "react";
 import { useEffect } from "react";
 import { useRef } from "react";
+import Canvas from "./Canvas";
 
 export default function Game() {
   const childRef = useRef();
@@ -13,9 +13,7 @@ export default function Game() {
 
   const reset = useCallback((event: Event) => {
     event.preventDefault();
-    //resets = resets + 1;
-    //setResets(resets);
-    childRef.current.resetGame();
+    childRef.current.reset();
   }, []);
 
   const onScoreChanged = useCallback((new_score) => {

@@ -7,8 +7,6 @@ import { useCallback } from "react";
 import { forwardRef } from "react";
 import { useImperativeHandle } from "react";
 
-let doit = false;
-
 interface Props {
   width: string;
   height: string;
@@ -21,13 +19,15 @@ var paused = false;
 const Canvas = forwardRef((props: Props, ref: ForwardedRef<unknown>) => {
   useImperativeHandle(ref, () => {
     return {
-      resetGame: resetGame,
+      reset: reset,
     };
   });
 
   const canvasRef = useRef(null);
 
   let [score, setScore] = useState(0);
+
+  const [refreshMilliseconds, setRefreshMilliseconds] = useState(10);
 
   let [x, setX] = useState(200); // starting horizontal position of ball
   let [y, setY] = useState(150); // starting vertical position of ball
@@ -148,11 +148,6 @@ const Canvas = forwardRef((props: Props, ref: ForwardedRef<unknown>) => {
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
 
-    if (doit) {
-      x = 250;
-      y = 150;
-      doit = false;
-    }
     if (!canvas) {
       return;
     }
@@ -219,13 +214,13 @@ const Canvas = forwardRef((props: Props, ref: ForwardedRef<unknown>) => {
     props.onScoreChanged(score);
   }, []);
 
-  const start_animation = () => {
-    intervalVariable = setInterval(draw, 13);
-  };
+  const start_animation = useCallback(() => {
+    intervalVariable = setInterval(draw, refreshMilliseconds);
+  }, []);
 
-  const stop_animation = () => {
+  const stop_animation = useCallback(() => {
     clearInterval(intervalVariable);
-  };
+  }, []);
 
   const onKeyPress = useCallback((evt: Event) => {
     if (paused == true) {
@@ -249,6 +244,9 @@ const Canvas = forwardRef((props: Props, ref: ForwardedRef<unknown>) => {
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
 
+    score = 0;
+    props.onScoreChanged(0);
+
     width = canvas.width;
     height = canvas.height;
 
@@ -262,23 +260,18 @@ const Canvas = forwardRef((props: Props, ref: ForwardedRef<unknown>) => {
     setCanvasMinX(canvasMinX);
     setCanvasMaxX(canvasMaxX);
 
+    x = 250;
+    y = 150;
+
     // run draw function every 6 milliseconds to give
     // the illusion of movement
     init_bricks();
     start_animation();
-
-    score = 0;
-    props.onScoreChanged(0);
   }, []);
 
   useEffect(() => {
     init();
   }, [initialized]);
-
-  const resetGame = useCallback(() => {
-    doit = true;
-    reset();
-  });
 
   return <canvas ref={canvasRef} width={props.width} height={props.height} />;
 });
