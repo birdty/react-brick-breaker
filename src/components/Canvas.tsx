@@ -279,14 +279,6 @@ const Canvas = forwardRef((props: Props, ref: ForwardedRef<unknown>) => {
   }, [initialized]);
 
   const resetGame = useCallback(() => {
-    /*
-    x = 250;
-    setX(250);
-    y = 150;
-    setY(150);
-    dx = 1;
-    dy = -3;
-*/
     doit = true;
     reset();
   });
